@@ -22,6 +22,10 @@ pub(crate) fn hash_object(data: Vec<u8>) -> std::io::Result<String> {
     };
 }
 
+pub(crate) fn get_object(oid: &String) -> std::io::Result<Vec<u8>> {
+    return fs::read(format!("{}/objects/{}", GIT_DIR, oid));
+}
+
 fn calculate_hash(data: &Vec<u8>) -> String {
     let hash = Sha1::new().chain_update(data).finalize();
     return base16ct::lower::encode_string(&hash);

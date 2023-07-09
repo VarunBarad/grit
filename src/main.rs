@@ -14,12 +14,14 @@ fn main() {
         .subcommand(Command::new("greet").about("Say hi to the world"))
         .subcommand(Command::new("init").about("Initialize a new repository"))
         .subcommand(Command::new("hash-object").arg(Arg::new("file").required(true)))
+        .subcommand(Command::new("cat-file").arg(Arg::new("oid").required(true)))
         .get_matches();
 
     match program_arguments.subcommand() {
         Some(("greet", _arguments)) => greet(),
         Some(("init", _arguments)) => init(),
         Some(("hash-object", arguments)) => hash_object(arguments),
+        Some(("cat-file", arguments)) => cat_file(arguments),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -49,5 +51,14 @@ fn hash_object(arguments: &ArgMatches) {
     match data::hash_object(file_contents) {
         Ok(oid) => println!("{}", oid),
         Err(e) => eprintln!("Failed to hash {}. Reason: {:?}", file_path.display(), e),
+    }
+}
+
+fn cat_file(arguments: &ArgMatches) {
+    let oid = arguments.get_one("oid").unwrap() as &String;
+
+    match data::get_object(oid) {
+        Ok(object) => print!("{}", String::from_utf8(object).unwrap()),
+        Err(e) => eprintln!("Failed to read object {}. Reason: {:?}", oid, e),
     }
 }
