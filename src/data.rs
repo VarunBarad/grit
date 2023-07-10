@@ -26,7 +26,7 @@ pub(crate) fn hash_object(data: Vec<u8>, object_type: &str) -> std::io::Result<S
     };
 }
 
-pub(crate) fn get_object(oid: &String, expected_type: Option<&str>) -> std::io::Result<Vec<u8>> {
+pub(crate) fn get_object(oid: &str, expected_type: Option<&str>) -> std::io::Result<Vec<u8>> {
     match fs::read(format!("{}/objects/{}", GIT_DIR, oid)) {
         Ok(object) => {
             let mut x = object.split(|byte| byte == &b'\x00');

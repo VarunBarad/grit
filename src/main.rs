@@ -17,6 +17,7 @@ fn main() {
         .subcommand(Command::new("hash-object").arg(Arg::new("file").required(true)))
         .subcommand(Command::new("cat-file").arg(Arg::new("oid").required(true)))
         .subcommand(Command::new("write-tree"))
+        .subcommand(Command::new("read-tree").arg(Arg::new("tree").required(true)))
         .get_matches();
 
     match program_arguments.subcommand() {
@@ -25,6 +26,7 @@ fn main() {
         Some(("hash-object", arguments)) => hash_object(arguments),
         Some(("cat-file", arguments)) => cat_file(arguments),
         Some(("write-tree", _arguments)) => write_tree(),
+        Some(("read-tree", arguments)) => read_tree(arguments),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -70,5 +72,14 @@ fn write_tree() {
     match base::write_tree(".") {
         Ok(oid) => println!("{}", oid),
         Err(e) => eprintln!("Failed to write the whole tree. Reason: {:?}", e),
+    }
+}
+
+fn read_tree(arguments: &ArgMatches) {
+    let tree_oid = arguments.get_one("tree").unwrap() as &String;
+
+    match base::read_tree(tree_oid) {
+        Ok(_) => println!("Successfully read tree {}", &tree_oid),
+        Err(e) => eprintln!("Failed to read tree {}. Reason: {:?}", &tree_oid, e),
     }
 }
