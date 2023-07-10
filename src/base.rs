@@ -1,3 +1,4 @@
+use crate::data;
 use std::fs;
 
 pub(crate) fn write_tree(directory: &str) {
@@ -11,8 +12,10 @@ pub(crate) fn write_tree(directory: &str) {
         }
 
         if fs::symlink_metadata(&path).unwrap().is_file() {
-            // ToDo: Write the file to object-store
-            println!("{}", full_path);
+            match data::hash_object(fs::read(&full_path).unwrap(), "blob") {
+                Ok(oid) => println!("{}", oid),
+                Err(e) => eprintln!("Failed to hash {}. Reason: {:?}", full_path, e),
+            }
         } else if fs::symlink_metadata(&path).unwrap().is_dir() {
             write_tree(&full_path);
         }
