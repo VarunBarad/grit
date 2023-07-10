@@ -6,6 +6,9 @@ pub(crate) fn write_tree(directory: &str) {
         let path = entry.path();
         let file_name = path.file_name().unwrap().to_str().unwrap();
         let full_path = format!("{}/{}", directory, file_name);
+        if is_ignored(&full_path) {
+            continue;
+        }
 
         if fs::symlink_metadata(&path).unwrap().is_file() {
             // ToDo: Write the file to object-store
@@ -16,4 +19,8 @@ pub(crate) fn write_tree(directory: &str) {
     }
 
     // ToDo: Actually create the tree object
+}
+
+fn is_ignored(path: &str) -> bool {
+    return path.split("/").any(|x| x == ".grit");
 }
