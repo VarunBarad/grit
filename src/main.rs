@@ -16,6 +16,7 @@ fn main() {
         .subcommand(Command::new("init").about("Initialize a new repository"))
         .subcommand(Command::new("hash-object").arg(Arg::new("file").required(true)))
         .subcommand(Command::new("cat-file").arg(Arg::new("oid").required(true)))
+        .subcommand(Command::new("write-tree"))
         .get_matches();
 
     match program_arguments.subcommand() {
@@ -23,6 +24,7 @@ fn main() {
         Some(("init", _arguments)) => init(),
         Some(("hash-object", arguments)) => hash_object(arguments),
         Some(("cat-file", arguments)) => cat_file(arguments),
+        Some(("write-tree", _arguments)) => write_tree(),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -62,4 +64,8 @@ fn cat_file(arguments: &ArgMatches) {
         Ok(object) => print!("{}", String::from_utf8(object).unwrap()),
         Err(e) => eprintln!("Failed to read object {}. Reason: {:?}", oid, e),
     }
+}
+
+fn write_tree() {
+    base::write_tree(".")
 }
