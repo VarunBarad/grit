@@ -48,7 +48,7 @@ fn hash_object(arguments: &ArgMatches) {
 
     let file_contents = fs::read(file_path.clone()).unwrap();
 
-    match data::hash_object(file_contents) {
+    match data::hash_object(file_contents, "blob") {
         Ok(oid) => println!("{}", oid),
         Err(e) => eprintln!("Failed to hash {}. Reason: {:?}", file_path.display(), e),
     }
@@ -57,7 +57,7 @@ fn hash_object(arguments: &ArgMatches) {
 fn cat_file(arguments: &ArgMatches) {
     let oid = arguments.get_one("oid").unwrap() as &String;
 
-    match data::get_object(oid) {
+    match data::get_object(oid, None) {
         Ok(object) => print!("{}", String::from_utf8(object).unwrap()),
         Err(e) => eprintln!("Failed to read object {}. Reason: {:?}", oid, e),
     }
