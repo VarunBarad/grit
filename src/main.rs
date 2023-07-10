@@ -67,5 +67,8 @@ fn cat_file(arguments: &ArgMatches) {
 }
 
 fn write_tree() {
-    base::write_tree(".")
+    match base::write_tree(".") {
+        Ok(oid) => println!("{}", oid),
+        Err(e) => eprintln!("Failed to write the whole tree. Reason: {:?}", e),
+    }
 }

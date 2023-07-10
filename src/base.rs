@@ -1,7 +1,15 @@
 use crate::data;
 use std::fs;
 
-pub(crate) fn write_tree(directory: &str) {
+struct TreeEntry {
+    object_type: String,
+    object_id: String,
+    file_name: String,
+}
+
+pub(crate) fn write_tree(directory: &str) -> std::io::Result<String> {
+    let mut entries: Vec<TreeEntry> = Vec::new();
+
     for entry in fs::read_dir(directory).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
@@ -12,16 +20,43 @@ pub(crate) fn write_tree(directory: &str) {
         }
 
         if fs::symlink_metadata(&path).unwrap().is_file() {
-            match data::hash_object(fs::read(&full_path).unwrap(), "blob") {
-                Ok(oid) => println!("{}", oid),
+            let object_type = "blob";
+            match data::hash_object(fs::read(&full_path).unwrap(), object_type) {
+                Ok(oid) => {
+                    entries.push(TreeEntry {
+                        object_type: object_type.to_string(),
+                        object_id: oid,
+                        file_name: file_name.to_string(),
+                    });
+                }
                 Err(e) => eprintln!("Failed to hash {}. Reason: {:?}", full_path, e),
             }
         } else if fs::symlink_metadata(&path).unwrap().is_dir() {
-            write_tree(&full_path);
+            let object_type = "tree";
+            match write_tree(&full_path) {
+                Ok(oid) => {
+                    entries.push(TreeEntry {
+                        object_type: object_type.to_string(),
+                        object_id: oid,
+                        file_name: file_name.to_string(),
+                    });
+                }
+                Err(e) => eprintln!("Failed to write_tree {}. Reason: {:?}", full_path, e),
+            }
         }
     }
 
-    // ToDo: Actually create the tree object
+    let tree = entries
+        .iter()
+        .map(|entry| {
+            format!(
+                "{} {} {}\n",
+                entry.object_type, entry.object_id, entry.file_name
+            )
+        })
+        .collect::<String>();
+
+    return data::hash_object(tree.as_bytes().to_vec(), "tree");
 }
 
 fn is_ignored(path: &str) -> bool {
