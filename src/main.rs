@@ -1,7 +1,7 @@
 mod base;
 mod data;
 
-use clap::{Arg, ArgMatches, Command};
+use clap::{arg, Arg, ArgMatches, Command};
 use std::fs;
 use std::path::Path;
 
@@ -18,6 +18,7 @@ fn main() {
         .subcommand(Command::new("cat-file").arg(Arg::new("oid").required(true)))
         .subcommand(Command::new("write-tree"))
         .subcommand(Command::new("read-tree").arg(Arg::new("tree").required(true)))
+        .subcommand(Command::new("commit").arg(arg!(--message <VALUE>).required(true)))
         .get_matches();
 
     match program_arguments.subcommand() {
@@ -27,6 +28,7 @@ fn main() {
         Some(("cat-file", arguments)) => cat_file(arguments),
         Some(("write-tree", _arguments)) => write_tree(),
         Some(("read-tree", arguments)) => read_tree(arguments),
+        Some(("commit", arguments)) => commit(arguments),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -81,5 +83,14 @@ fn read_tree(arguments: &ArgMatches) {
     match base::read_tree(tree_oid) {
         Ok(_) => println!("Successfully read tree {}", &tree_oid),
         Err(e) => eprintln!("Failed to read tree {}. Reason: {:?}", &tree_oid, e),
+    }
+}
+
+fn commit(arguments: &ArgMatches) {
+    let message = arguments.get_one("message").unwrap() as &String;
+
+    match base::commit(message) {
+        Ok(oid) => println!("{}", oid),
+        Err(e) => eprintln!("Failed to commit. Reason: {:?}", e),
     }
 }

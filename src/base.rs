@@ -149,6 +149,13 @@ pub(crate) fn read_tree(tree_id: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+pub(crate) fn commit(message: &str) -> std::io::Result<String> {
+    let tree_id = write_tree(".")?;
+    let commit = format!("tree {}\n\n{}", tree_id, message);
+    let oid = data::hash_object(commit.as_bytes().to_vec(), "commit")?;
+    Ok(oid)
+}
+
 fn is_ignored(path: &str) -> bool {
     return path.split("/").any(|x| x == ".grit");
 }
