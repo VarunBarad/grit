@@ -1,5 +1,6 @@
 use sha1::{Digest, Sha1};
 use std::fs;
+use std::path::Path;
 
 pub(crate) const GIT_DIR: &str = ".grit";
 
@@ -47,6 +48,20 @@ pub(crate) fn get_object(oid: &str, expected_type: Option<&str>) -> std::io::Res
 #[allow(non_snake_case)]
 pub(crate) fn set_HEAD(oid: &str) -> std::io::Result<()> {
     fs::write(format!("{}/HEAD", GIT_DIR), oid)
+}
+
+#[allow(non_snake_case)]
+pub(crate) fn get_HEAD() -> std::io::Result<Option<String>> {
+    let path = format!("{}/HEAD", GIT_DIR);
+    let path = Path::new(&path);
+    if path.exists() {
+        match fs::read_to_string(format!("{}/HEAD", GIT_DIR)) {
+            Ok(oid) => Ok(Some(oid)),
+            Err(e) => Err(e),
+        }
+    } else {
+        Ok(None)
+    }
 }
 
 fn calculate_hash(data: &Vec<u8>) -> String {

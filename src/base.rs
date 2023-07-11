@@ -151,7 +151,14 @@ pub(crate) fn read_tree(tree_id: &str) -> std::io::Result<()> {
 
 pub(crate) fn commit(message: &str) -> std::io::Result<String> {
     let tree_id = write_tree(".")?;
-    let commit = format!("tree {}\n\n{}", tree_id, message);
+    let tree = format!("tree {}\n", &tree_id);
+
+    let parent = match data::get_HEAD()? {
+        None => "".to_string(),
+        Some(parent) => format!("parent {}\n", parent),
+    };
+
+    let commit = format!("{}{}\n{}", tree, parent, message);
     let oid = data::hash_object(commit.as_bytes().to_vec(), "commit")?;
     data::set_HEAD(&oid)?;
     Ok(oid)
