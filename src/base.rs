@@ -113,7 +113,27 @@ fn get_tree(tree_id: &str, base_path: &str) -> HashMap<String, String> {
     tree
 }
 
+fn empty_directory<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let path = entry.path();
+        if is_ignored(path.to_str().unwrap()) {
+            continue;
+        }
+
+        if fs::symlink_metadata(&path)?.is_file() {
+            fs::remove_file(&path)?;
+        } else if fs::symlink_metadata(&path)?.is_dir() {
+            empty_directory(&path)?;
+            fs::remove_dir(&path)?;
+        }
+    }
+    Ok(())
+}
+
 pub(crate) fn read_tree(tree_id: &str) -> std::io::Result<()> {
+    empty_directory("./")?;
+
     for (path, oid) in get_tree(tree_id, "./") {
         let actual_path = Path::new(&path);
         match fs::create_dir_all(actual_path.parent().unwrap()) {
