@@ -153,6 +153,7 @@ pub(crate) fn commit(message: &str) -> std::io::Result<String> {
     let tree_id = write_tree(".")?;
     let commit = format!("tree {}\n\n{}", tree_id, message);
     let oid = data::hash_object(commit.as_bytes().to_vec(), "commit")?;
+    data::set_HEAD(&oid)?;
     Ok(oid)
 }
 

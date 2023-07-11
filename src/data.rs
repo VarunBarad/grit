@@ -44,6 +44,11 @@ pub(crate) fn get_object(oid: &str, expected_type: Option<&str>) -> std::io::Res
     }
 }
 
+#[allow(non_snake_case)]
+pub(crate) fn set_HEAD(oid: &str) -> std::io::Result<()> {
+    fs::write(format!("{}/HEAD", GIT_DIR), oid)
+}
+
 fn calculate_hash(data: &Vec<u8>) -> String {
     let hash = Sha1::new().chain_update(data).finalize();
     return base16ct::lower::encode_string(&hash);
