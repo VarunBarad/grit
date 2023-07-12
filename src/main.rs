@@ -19,7 +19,7 @@ fn main() {
         .subcommand(Command::new("write-tree"))
         .subcommand(Command::new("read-tree").arg(Arg::new("tree").required(true)))
         .subcommand(Command::new("commit").arg(arg!(--message <VALUE>).required(true)))
-        .subcommand(Command::new("log"))
+        .subcommand(Command::new("log").arg(Arg::new("commit_id").required(false)))
         .get_matches();
 
     match program_arguments.subcommand() {
@@ -30,7 +30,7 @@ fn main() {
         Some(("write-tree", _arguments)) => write_tree(),
         Some(("read-tree", arguments)) => read_tree(arguments),
         Some(("commit", arguments)) => commit(arguments),
-        Some(("log", _arguments)) => log(),
+        Some(("log", arguments)) => log(arguments),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -97,43 +97,52 @@ fn commit(arguments: &ArgMatches) {
     }
 }
 
-fn log() {
-    let head = data::get_HEAD();
-
-    match head {
-        Ok(mut current_oid) => {
-            if current_oid.is_none() {
-                println!("There are no commits yet.");
-                return;
-            }
-
-            loop {
-                match current_oid {
-                    None => break,
-                    Some(ref commit_id) => match base::get_commit(commit_id) {
-                        Ok(commit) => {
-                            println!("commit {}", commit_id);
-                            let indented_commit_message = commit
-                                .message
-                                .lines()
-                                .map(|line| format!("\t{}", line))
-                                .collect::<Vec<String>>()
-                                .join("\n");
-                            println!("{}", indented_commit_message);
-                            println!();
-                            current_oid = commit.parent;
-                        }
-                        Err(e) => {
-                            eprintln!(
-                                "Failed to display commit log. At commit {}. Reason: {:?}",
-                                commit_id, e
-                            );
-                            break;
-                        }
-                    },
+fn log(arguments: &ArgMatches) {
+    let starting_commit_id = match arguments.get_one("commit_id") as Option<&String> {
+        None => {
+            let head = data::get_HEAD();
+            match head {
+                Ok(head_commit_id) => match head_commit_id {
+                    None => {
+                        println!("There are no commits yet.");
+                        return;
+                    }
+                    Some(head_commit_id) => head_commit_id,
+                },
+                Err(e) => {
+                    eprintln!("Failed to display commit log. Reason: {:?}", e);
+                    return;
                 }
             }
         }
-        Err(e) => eprintln!("Failed to display commit log. Reason: {:?}", e),
+        Some(commit_id) => commit_id.to_string(),
+    };
+
+    let mut current_commit_id = Some(starting_commit_id);
+    loop {
+        match current_commit_id {
+            None => break,
+            Some(ref commit_id) => match base::get_commit(commit_id) {
+                Ok(commit) => {
+                    println!("commit {}", commit_id);
+                    let indented_commit_message = commit
+                        .message
+                        .lines()
+                        .map(|line| format!("\t{}", line))
+                        .collect::<Vec<String>>()
+                        .join("\n");
+                    println!("{}", indented_commit_message);
+                    println!();
+                    current_commit_id = commit.parent;
+                }
+                Err(e) => {
+                    eprintln!(
+                        "Failed to display commit log. At commit {}. Reason: {:?}",
+                        commit_id, e
+                    );
+                    break;
+                }
+            },
+        }
     }
 }
