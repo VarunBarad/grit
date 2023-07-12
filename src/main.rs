@@ -19,6 +19,7 @@ fn main() {
         .subcommand(Command::new("write-tree"))
         .subcommand(Command::new("read-tree").arg(Arg::new("tree").required(true)))
         .subcommand(Command::new("commit").arg(arg!(--message <VALUE>).required(true)))
+        .subcommand(Command::new("log"))
         .get_matches();
 
     match program_arguments.subcommand() {
@@ -29,6 +30,7 @@ fn main() {
         Some(("write-tree", _arguments)) => write_tree(),
         Some(("read-tree", arguments)) => read_tree(arguments),
         Some(("commit", arguments)) => commit(arguments),
+        Some(("log", _arguments)) => log(),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -92,5 +94,46 @@ fn commit(arguments: &ArgMatches) {
     match base::commit(message) {
         Ok(oid) => println!("{}", oid),
         Err(e) => eprintln!("Failed to commit. Reason: {:?}", e),
+    }
+}
+
+fn log() {
+    let head = data::get_HEAD();
+
+    match head {
+        Ok(mut current_oid) => {
+            if current_oid.is_none() {
+                println!("There are no commits yet.");
+                return;
+            }
+
+            loop {
+                match current_oid {
+                    None => break,
+                    Some(ref commit_id) => match base::get_commit(commit_id) {
+                        Ok(commit) => {
+                            println!("commit {}", commit_id);
+                            let indented_commit_message = commit
+                                .message
+                                .lines()
+                                .map(|line| format!("\t{}", line))
+                                .collect::<Vec<String>>()
+                                .join("\n");
+                            println!("{}", indented_commit_message);
+                            println!();
+                            current_oid = commit.parent;
+                        }
+                        Err(e) => {
+                            eprintln!(
+                                "Failed to display commit log. At commit {}. Reason: {:?}",
+                                commit_id, e
+                            );
+                            break;
+                        }
+                    },
+                }
+            }
+        }
+        Err(e) => eprintln!("Failed to display commit log. Reason: {:?}", e),
     }
 }

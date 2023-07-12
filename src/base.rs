@@ -10,6 +10,12 @@ struct TreeEntry {
     file_name: String,
 }
 
+pub(crate) struct Commit {
+    tree: String,
+    pub(crate) parent: Option<String>,
+    pub(crate) message: String,
+}
+
 pub(crate) fn write_tree(directory: &str) -> std::io::Result<String> {
     let mut entries: Vec<TreeEntry> = Vec::new();
 
@@ -162,6 +168,86 @@ pub(crate) fn commit(message: &str) -> std::io::Result<String> {
     let oid = data::hash_object(commit.as_bytes().to_vec(), "commit")?;
     data::set_HEAD(&oid)?;
     Ok(oid)
+}
+
+pub(crate) fn get_commit(commit_id: &str) -> std::io::Result<Commit> {
+    let commit_contents = match data::get_object(commit_id, Some("commit")) {
+        Ok(commit) => String::from_utf8(commit).unwrap(),
+        Err(_) => {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("No commit found for Commit ID {}", commit_id),
+            ));
+        }
+    };
+    let mut commit_lines = commit_contents.lines();
+
+    let tree = match commit_lines.next() {
+        None => {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!(
+                    "Invalid commit contents. Commit ID {}. Commit Contents {}",
+                    commit_id, commit_contents,
+                ),
+            ))
+        }
+        Some(tree) => {
+            let (tree_type, tree_id) = tree.split_once(' ').unwrap();
+            if tree_type != "tree" {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    format!(
+                        "Invalid commit contents. Commit ID {}. Commit Contents {}",
+                        commit_id, commit_contents,
+                    ),
+                ));
+            }
+            tree_id
+        }
+    };
+
+    let parent_line = commit_lines.next();
+    let parent = match parent_line {
+        None => {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!(
+                    "Invalid commit contents. Commit ID {}. Commit Contents {}",
+                    commit_id, commit_contents,
+                ),
+            ))
+        }
+        Some(parent_line) => {
+            if parent_line.trim().is_empty() {
+                None
+            } else {
+                let (parent_type, parent_id) = parent_line.split_once(' ').unwrap();
+                if parent_type != "parent" {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        format!(
+                            "Invalid commit contents. Commit ID {}. Commit Contents {}",
+                            commit_id, commit_contents,
+                        ),
+                    ));
+                }
+                Some(parent_id.to_string())
+            }
+        }
+    };
+
+    if parent.is_some() {
+        commit_lines.next();
+    }
+
+    let message = commit_lines.collect::<Vec<&str>>().join("\n");
+
+    Ok(Commit {
+        tree: tree.to_string(),
+        parent,
+        message,
+    })
 }
 
 fn is_ignored(path: &str) -> bool {
