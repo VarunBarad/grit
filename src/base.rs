@@ -250,6 +250,12 @@ pub(crate) fn get_commit(commit_id: &str) -> std::io::Result<Commit> {
     })
 }
 
+pub(crate) fn checkout(commit_id: &str) -> std::io::Result<()> {
+    let commit = get_commit(commit_id)?;
+    read_tree(&commit.tree)?;
+    data::set_HEAD(commit_id)
+}
+
 fn is_ignored(path: &str) -> bool {
     return path.split("/").any(|x| x == ".grit");
 }

@@ -20,6 +20,7 @@ fn main() {
         .subcommand(Command::new("read-tree").arg(Arg::new("tree").required(true)))
         .subcommand(Command::new("commit").arg(arg!(--message <VALUE>).required(true)))
         .subcommand(Command::new("log").arg(Arg::new("commit_id").required(false)))
+        .subcommand(Command::new("checkout").arg(Arg::new("commit_id").required(true)))
         .get_matches();
 
     match program_arguments.subcommand() {
@@ -31,6 +32,7 @@ fn main() {
         Some(("read-tree", arguments)) => read_tree(arguments),
         Some(("commit", arguments)) => commit(arguments),
         Some(("log", arguments)) => log(arguments),
+        Some(("checkout", arguments)) => checkout(arguments),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -144,5 +146,13 @@ fn log(arguments: &ArgMatches) {
                 }
             },
         }
+    }
+}
+
+fn checkout(arguments: &ArgMatches) {
+    let commit_id = arguments.get_one("commit_id").unwrap() as &String;
+    match base::checkout(commit_id) {
+        Ok(_) => println!("Checked out commit {}", commit_id),
+        Err(e) => eprintln!("Failed to checkout commit {}. Reason: {:?}", commit_id, e),
     }
 }
