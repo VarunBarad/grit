@@ -256,6 +256,10 @@ pub(crate) fn checkout(commit_id: &str) -> std::io::Result<()> {
     data::set_HEAD(commit_id)
 }
 
+pub(crate) fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
+    todo!("Create the tag")
+}
+
 fn is_ignored(path: &str) -> bool {
     return path.split("/").any(|x| x == ".grit");
 }

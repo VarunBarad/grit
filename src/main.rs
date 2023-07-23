@@ -21,6 +21,11 @@ fn main() {
         .subcommand(Command::new("commit").arg(arg!(--message <VALUE>).required(true)))
         .subcommand(Command::new("log").arg(Arg::new("commit_id").required(false)))
         .subcommand(Command::new("checkout").arg(Arg::new("commit_id").required(true)))
+        .subcommand(
+            Command::new("tag")
+                .arg(Arg::new("tag_name").required(true))
+                .arg(Arg::new("commit_id").required(false)),
+        )
         .get_matches();
 
     match program_arguments.subcommand() {
@@ -33,6 +38,7 @@ fn main() {
         Some(("commit", arguments)) => commit(arguments),
         Some(("log", arguments)) => log(arguments),
         Some(("checkout", arguments)) => checkout(arguments),
+        Some(("tag", arguments)) => tag(arguments),
         _ => eprintln!("No known pattern found"),
     }
 }
@@ -154,5 +160,21 @@ fn checkout(arguments: &ArgMatches) {
     match base::checkout(commit_id) {
         Ok(_) => println!("Checked out commit {}", commit_id),
         Err(e) => eprintln!("Failed to checkout commit {}. Reason: {:?}", commit_id, e),
+    }
+}
+
+fn tag(arguments: &ArgMatches) {
+    let tag_name = arguments.get_one("tag_name").unwrap() as &String;
+    let commit_id = match arguments.get_one("commit_id") as Option<&String> {
+        None => data::get_HEAD().unwrap().unwrap(),
+        Some(commit_id) => commit_id.to_string(),
+    };
+
+    match base::create_tag(tag_name, &commit_id) {
+        Ok(_) => println!("Tagged commit {} as {}", commit_id, tag_name),
+        Err(e) => eprintln!(
+            "Failed to tag commit {} as {}. Reason: {:?}",
+            commit_id, tag_name, e,
+        ),
     }
 }
