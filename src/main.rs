@@ -108,7 +108,7 @@ fn commit(arguments: &ArgMatches) {
 fn log(arguments: &ArgMatches) {
     let starting_commit_id = match arguments.get_one("commit_id") as Option<&String> {
         None => {
-            let head = data::get_HEAD();
+            let head = data::get_ref("HEAD");
             match head {
                 Ok(head_commit_id) => match head_commit_id {
                     None => {
@@ -166,7 +166,7 @@ fn checkout(arguments: &ArgMatches) {
 fn tag(arguments: &ArgMatches) {
     let tag_name = arguments.get_one("tag_name").unwrap() as &String;
     let commit_id = match arguments.get_one("commit_id") as Option<&String> {
-        None => data::get_HEAD().unwrap().unwrap(),
+        None => data::get_ref("HEAD").unwrap().unwrap(),
         Some(commit_id) => commit_id.to_string(),
     };
 

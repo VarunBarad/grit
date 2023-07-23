@@ -159,14 +159,14 @@ pub(crate) fn commit(message: &str) -> std::io::Result<String> {
     let tree_id = write_tree(".")?;
     let tree = format!("tree {}\n", &tree_id);
 
-    let parent = match data::get_HEAD()? {
+    let parent = match data::get_ref("HEAD")? {
         None => "".to_string(),
         Some(parent) => format!("parent {}\n", parent),
     };
 
     let commit = format!("{}{}\n{}", tree, parent, message);
     let oid = data::hash_object(commit.as_bytes().to_vec(), "commit")?;
-    data::set_HEAD(&oid)?;
+    data::update_ref("HEAD", &oid)?;
     Ok(oid)
 }
 
@@ -253,7 +253,7 @@ pub(crate) fn get_commit(commit_id: &str) -> std::io::Result<Commit> {
 pub(crate) fn checkout(commit_id: &str) -> std::io::Result<()> {
     let commit = get_commit(commit_id)?;
     read_tree(&commit.tree)?;
-    data::set_HEAD(commit_id)
+    data::update_ref("HEAD", commit_id)
 }
 
 pub(crate) fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {

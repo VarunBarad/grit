@@ -45,17 +45,15 @@ pub(crate) fn get_object(oid: &str, expected_type: Option<&str>) -> std::io::Res
     }
 }
 
-#[allow(non_snake_case)]
-pub(crate) fn set_HEAD(oid: &str) -> std::io::Result<()> {
-    fs::write(format!("{}/HEAD", GIT_DIR), oid)
+pub(crate) fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
+    fs::write(format!("{}/{}", GIT_DIR, ref_name), oid)
 }
 
-#[allow(non_snake_case)]
-pub(crate) fn get_HEAD() -> std::io::Result<Option<String>> {
-    let path = format!("{}/HEAD", GIT_DIR);
+pub(crate) fn get_ref(ref_name: &str) -> std::io::Result<Option<String>> {
+    let path = format!("{}/{}", GIT_DIR, ref_name);
     let path = Path::new(&path);
     if path.exists() {
-        match fs::read_to_string(format!("{}/HEAD", GIT_DIR)) {
+        match fs::read_to_string(format!("{}/{}", GIT_DIR, ref_name)) {
             Ok(oid) => Ok(Some(oid)),
             Err(e) => Err(e),
         }
