@@ -73,8 +73,9 @@ fn hash_object(arguments: &ArgMatches) {
 
 fn cat_file(arguments: &ArgMatches) {
     let oid = arguments.get_one("oid").unwrap() as &String;
+    let resolved_oid = base::get_oid(oid);
 
-    match data::get_object(oid, None) {
+    match data::get_object(&resolved_oid, None) {
         Ok(object) => print!("{}", String::from_utf8(object).unwrap()),
         Err(e) => eprintln!("Failed to read object {}. Reason: {:?}", oid, e),
     }
@@ -89,8 +90,9 @@ fn write_tree() {
 
 fn read_tree(arguments: &ArgMatches) {
     let tree_oid = arguments.get_one("tree").unwrap() as &String;
+    let resolved_oid = base::get_oid(tree_oid);
 
-    match base::read_tree(tree_oid) {
+    match base::read_tree(&resolved_oid) {
         Ok(_) => println!("Successfully read tree {}", &tree_oid),
         Err(e) => eprintln!("Failed to read tree {}. Reason: {:?}", &tree_oid, e),
     }
@@ -125,8 +127,9 @@ fn log(arguments: &ArgMatches) {
         }
         Some(commit_id) => commit_id.to_string(),
     };
+    let resolved_starting_commit_id = base::get_oid(&starting_commit_id);
 
-    let mut current_commit_id = Some(starting_commit_id);
+    let mut current_commit_id = Some(resolved_starting_commit_id);
     loop {
         match current_commit_id {
             None => break,
@@ -157,7 +160,8 @@ fn log(arguments: &ArgMatches) {
 
 fn checkout(arguments: &ArgMatches) {
     let commit_id = arguments.get_one("commit_id").unwrap() as &String;
-    match base::checkout(commit_id) {
+    let resolved_commit_id = base::get_oid(commit_id);
+    match base::checkout(&resolved_commit_id) {
         Ok(_) => println!("Checked out commit {}", commit_id),
         Err(e) => eprintln!("Failed to checkout commit {}. Reason: {:?}", commit_id, e),
     }
@@ -169,8 +173,9 @@ fn tag(arguments: &ArgMatches) {
         None => data::get_ref("HEAD").unwrap().unwrap(),
         Some(commit_id) => commit_id.to_string(),
     };
+    let resolved_commit_id = base::get_oid(&commit_id);
 
-    match base::create_tag(tag_name, &commit_id) {
+    match base::create_tag(tag_name, &resolved_commit_id) {
         Ok(_) => println!("Tagged commit {} as {}", commit_id, tag_name),
         Err(e) => eprintln!(
             "Failed to tag commit {} as {}. Reason: {:?}",

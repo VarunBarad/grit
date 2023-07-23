@@ -260,6 +260,13 @@ pub(crate) fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
     data::update_ref(&format!("refs/tags/{}", name), oid)
 }
 
+pub(crate) fn get_oid(name: &str) -> String {
+    match data::get_ref(name).unwrap() {
+        None => name.to_string(),
+        Some(oid) => oid,
+    }
+}
+
 fn is_ignored(path: &str) -> bool {
     return path.split("/").any(|x| x == ".grit");
 }
