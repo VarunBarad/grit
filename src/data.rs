@@ -46,6 +46,9 @@ pub(crate) fn get_object(oid: &str, expected_type: Option<&str>) -> std::io::Res
 }
 
 pub(crate) fn update_ref(ref_name: &str, oid: &str) -> std::io::Result<()> {
+    let ref_path = format!("{}/{}", GIT_DIR, ref_name);
+    let ref_path = Path::new(&ref_path);
+    fs::create_dir_all(ref_path.parent().unwrap())?;
     fs::write(format!("{}/{}", GIT_DIR, ref_name), oid)
 }
 

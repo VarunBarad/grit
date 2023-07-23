@@ -257,7 +257,7 @@ pub(crate) fn checkout(commit_id: &str) -> std::io::Result<()> {
 }
 
 pub(crate) fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
-    todo!("Create the tag")
+    data::update_ref(&format!("refs/tags/{}", name), oid)
 }
 
 fn is_ignored(path: &str) -> bool {
