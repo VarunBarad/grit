@@ -260,11 +260,30 @@ pub(crate) fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
     data::update_ref(&format!("refs/tags/{}", name), oid)
 }
 
-pub(crate) fn get_oid(name: &str) -> String {
-    match data::get_ref(name).unwrap() {
-        None => name.to_string(),
-        Some(oid) => oid,
+pub(crate) fn get_oid(name: &str) -> std::io::Result<String> {
+    // name is a ref
+    let refs_to_try = vec![
+        name.to_string(),
+        format!("refs/{}", name),
+        format!("refs/tags/{}", name),
+        format!("refs/heads/{}", name),
+    ];
+    for reference in refs_to_try {
+        if let Some(oid) = data::get_ref(&reference).unwrap() {
+            return Ok(oid);
+        }
     }
+
+    // name is SHA1
+    let name_is_hex = name.chars().all(|c| c.is_ascii_hexdigit());
+    if name.len() == 40 && name_is_hex {
+        return Ok(name.to_string());
+    }
+
+    return Err(std::io::Error::new(
+        std::io::ErrorKind::NotFound,
+        format!("No reference found for name {}", name),
+    ));
 }
 
 fn is_ignored(path: &str) -> bool {
