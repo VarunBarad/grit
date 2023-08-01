@@ -10,8 +10,8 @@ pub(crate) fn init() -> std::io::Result<()> {
         Err(e) => return Err(e),
     }
     match fs::create_dir(format!("{}/objects", GIT_DIR)) {
-        Ok(_) => Result::Ok(()),
-        Err(e) => return Err(e),
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
     }
 }
 
@@ -21,10 +21,10 @@ pub(crate) fn hash_object(data: Vec<u8>, object_type: &str) -> std::io::Result<S
     object.push(b'\x00');
     object.extend(data);
     let oid = calculate_hash(&object);
-    return match fs::write(format!("{}/objects/{}", GIT_DIR, oid), object) {
+    match fs::write(format!("{}/objects/{}", GIT_DIR, oid), object) {
         Ok(_) => Ok(oid),
         Err(e) => Err(e),
-    };
+    }
 }
 
 pub(crate) fn get_object(oid: &str, expected_type: Option<&str>) -> std::io::Result<Vec<u8>> {
@@ -67,5 +67,5 @@ pub(crate) fn get_ref(ref_name: &str) -> std::io::Result<Option<String>> {
 
 fn calculate_hash(data: &Vec<u8>) -> String {
     let hash = Sha1::new().chain_update(data).finalize();
-    return base16ct::lower::encode_string(&hash);
+    base16ct::lower::encode_string(&hash)
 }

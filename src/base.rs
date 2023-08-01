@@ -282,12 +282,12 @@ pub(crate) fn get_oid(name: &str) -> std::io::Result<String> {
         return Ok(name.to_string());
     }
 
-    return Err(std::io::Error::new(
+    Err(std::io::Error::new(
         std::io::ErrorKind::NotFound,
         format!("No reference found for name {}", name),
-    ));
+    ))
 }
 
 fn is_ignored(path: &str) -> bool {
-    return path.split("/").any(|x| x == ".grit");
+    return path.split('/').any(|x| x == ".grit");
 }

@@ -123,7 +123,7 @@ fn commit(arguments: &ArgMatches) {
 
 fn log(arguments: &ArgMatches) {
     let starting_commit_id = arguments.get_one("commit_id").unwrap() as &String;
-    let resolved_starting_commit_id = match base::get_oid(&starting_commit_id) {
+    let resolved_starting_commit_id = match base::get_oid(starting_commit_id) {
         Ok(oid) => oid,
         Err(e) => {
             eprintln!(
@@ -181,7 +181,7 @@ fn checkout(arguments: &ArgMatches) {
 fn tag(arguments: &ArgMatches) {
     let tag_name = arguments.get_one("tag_name").unwrap() as &String;
     let commit_id = arguments.get_one("commit_id").unwrap() as &String;
-    let resolved_commit_id = match base::get_oid(&commit_id) {
+    let resolved_commit_id = match base::get_oid(commit_id) {
         Ok(oid) => oid,
         Err(e) => {
             eprintln!("Failed to resolve OID {}. Reason: {:?}", &commit_id, e);
