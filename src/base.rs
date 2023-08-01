@@ -261,6 +261,8 @@ pub(crate) fn create_tag(name: &str, oid: &str) -> std::io::Result<()> {
 }
 
 pub(crate) fn get_oid(name: &str) -> std::io::Result<String> {
+    let name = if name == "@" { "HEAD" } else { name };
+
     // name is a ref
     let refs_to_try = vec![
         name.to_string(),

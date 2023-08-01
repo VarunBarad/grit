@@ -19,12 +19,14 @@ fn main() {
         .subcommand(Command::new("write-tree"))
         .subcommand(Command::new("read-tree").arg(Arg::new("tree").required(true)))
         .subcommand(Command::new("commit").arg(arg!(--message <VALUE>).required(true)))
-        .subcommand(Command::new("log").arg(Arg::new("commit_id").required(false)))
+        .subcommand(
+            Command::new("log").arg(Arg::new("commit_id").required(false).default_value("@")),
+        )
         .subcommand(Command::new("checkout").arg(Arg::new("commit_id").required(true)))
         .subcommand(
             Command::new("tag")
                 .arg(Arg::new("tag_name").required(true))
-                .arg(Arg::new("commit_id").required(false)),
+                .arg(Arg::new("commit_id").required(false).default_value("@")),
         )
         .get_matches();
 
@@ -120,25 +122,7 @@ fn commit(arguments: &ArgMatches) {
 }
 
 fn log(arguments: &ArgMatches) {
-    let starting_commit_id = match arguments.get_one("commit_id") as Option<&String> {
-        None => {
-            let head = data::get_ref("HEAD");
-            match head {
-                Ok(head_commit_id) => match head_commit_id {
-                    None => {
-                        println!("There are no commits yet.");
-                        return;
-                    }
-                    Some(head_commit_id) => head_commit_id,
-                },
-                Err(e) => {
-                    eprintln!("Failed to display commit log. Reason: {:?}", e);
-                    return;
-                }
-            }
-        }
-        Some(commit_id) => commit_id.to_string(),
-    };
+    let starting_commit_id = arguments.get_one("commit_id").unwrap() as &String;
     let resolved_starting_commit_id = match base::get_oid(&starting_commit_id) {
         Ok(oid) => oid,
         Err(e) => {
@@ -196,10 +180,7 @@ fn checkout(arguments: &ArgMatches) {
 
 fn tag(arguments: &ArgMatches) {
     let tag_name = arguments.get_one("tag_name").unwrap() as &String;
-    let commit_id = match arguments.get_one("commit_id") as Option<&String> {
-        None => data::get_ref("HEAD").unwrap().unwrap(),
-        Some(commit_id) => commit_id.to_string(),
-    };
+    let commit_id = arguments.get_one("commit_id").unwrap() as &String;
     let resolved_commit_id = match base::get_oid(&commit_id) {
         Ok(oid) => oid,
         Err(e) => {
